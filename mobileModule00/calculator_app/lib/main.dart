@@ -34,6 +34,7 @@ class CalculatorPage extends StatefulWidget {
 class _CalculatorPageState extends State<CalculatorPage> {
   final TextEditingController _expressionController = TextEditingController();
   final TextEditingController _resultController = TextEditingController();
+  ScrollController _scrollController = ScrollController();
 
   String _expression = "";
   String _result = "0";
@@ -41,7 +42,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
   @override
   void initState() {
     super.initState();
-    _expressionController.text = "0";
+    _expressionController.text = "";
     _resultController.text = "0";
   }
 
@@ -101,13 +102,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
   }
 
   void _addOperator(String operator) {
-    if (_expression.isEmpty) return;
-
-    if (_isOperator(_expression[_expression.length - 1])) {
-      _expression = _expression.substring(0, _expression.length - 1) + operator;
-    } else {
-      _expression += operator;
-    }
+    _expression += operator;
   }
 
   void _calculateResult() {
@@ -138,7 +133,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
       return result.toInt().toString();
     } else {
       return result
-          .toStringAsFixed(8)
+          .toStringAsFixed(15)
           .replaceAll(RegExp(r'0*$'), '')
           .replaceAll(RegExp(r'\.$'), '');
     }
@@ -160,8 +155,17 @@ class _CalculatorPageState extends State<CalculatorPage> {
   }
 
   void _updateDisplay() {
-    _expressionController.text = _expression.isEmpty ? "0" : _expression;
+    _expressionController.text = _expression.isEmpty ? "" : _expression;
     _resultController.text = _result;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 100),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   Widget _buildButton(String text, {Color? color, Color? textColor}) {
@@ -208,23 +212,29 @@ class _CalculatorPageState extends State<CalculatorPage> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              TextField(
-                controller: _expressionController,
-                readOnly: true,
-                textAlign: TextAlign.right,
-                style: const TextStyle(fontSize: 24),
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'Expression',
+              SizedBox(
+                width: MediaQuery.of(context).size.width,
+                child: TextField(
+                  controller: _expressionController,
+                  scrollController: _scrollController,
+                  readOnly: true,
+                  maxLines: 1,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(fontSize: 24),
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Expression',
+                  ),
                 ),
               ),
+
               const SizedBox(height: 16),
               TextField(
                 controller: _resultController,
                 readOnly: true,
                 textAlign: TextAlign.right,
                 style: const TextStyle(
-                  fontSize: 32,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
                 decoration: const InputDecoration(
@@ -255,17 +265,23 @@ class _CalculatorPageState extends State<CalculatorPage> {
             child: Column(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _expressionController,
-                    readOnly: true,
-                    textAlign: TextAlign.right,
-                    style: const TextStyle(fontSize: 20),
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Expression',
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width,
+                    child: TextField(
+                      controller: _expressionController,
+                      scrollController: _scrollController,
+                      readOnly: true,
+                      maxLines: 1,
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(fontSize: 24),
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: 'Expression',
+                      ),
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 16),
                 Expanded(
                   child: TextField(
@@ -273,7 +289,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
                     readOnly: true,
                     textAlign: TextAlign.right,
                     style: const TextStyle(
-                      fontSize: 28,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),
                     decoration: const InputDecoration(
@@ -407,6 +423,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
   void dispose() {
     _expressionController.dispose();
     _resultController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 }
